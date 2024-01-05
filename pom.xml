@@ -42,8 +42,8 @@ SAX2 and Stax2 APIs
       <version.plugin.javadoc>3.1.1</version.plugin.javadoc>
 
       <!-- Woodstox 5.0 is 1.6+ -->
-      <javac.src.version>1.6</javac.src.version>
-      <javac.target.version>1.6</javac.target.version>
+      <javac.src.version>1.8</javac.src.version>
+      <javac.target.version>1.8</javac.target.version>
 
       <!-- Since our groupId is NOT the same as Java package id, need to explicitly define.
            And due to number of packages, let's just include all.
@@ -93,7 +93,7 @@ SAX2 and Stax2 APIs
           + "msv" ones (3 subgroups)
           + "com.sun.msv", but only for xsdlib
 
-          and all with varying sets of dependencies; 
+          and all with varying sets of dependencies;
           For now, we'll just use "msv", which does not properly define
           dependencies...
 
@@ -129,8 +129,12 @@ SAX2 and Stax2 APIs
  -->
             <optional>true</optional>
         </dependency>
-
-	<!-- 03-Jun-2019, tatu: Not sure why this was added as a dep as it's only one class,
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
+            <version>1.9.7</version>
+        </dependency>
+    	<!-- 03-Jun-2019, tatu: Not sure why this was added as a dep as it's only one class,
 	     `com.sun.msv.writer.relaxng.Driver`, and some metadata. I assumed it was needed by MSV
 	     but at least unit tests do not cache issues. So, will remove from 5.3.0
 	  -->
@@ -174,6 +178,23 @@ SAX2 and Stax2 APIs
 
     <build>
       <plugins>
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>aspectj-maven-plugin</artifactId>
+            <version>1.15.0</version>
+            <configuration>
+                <complianceLevel>1.8</complianceLevel>
+                <source>1.8</source>
+                <target>1.8</target>
+            </configuration>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>compile</goal> <!-- use this goal to weave all your main classes -->
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
 	<!-- 10-Jul-2021, tatu: Add code coverage again -->
 	<plugin>
           <groupId>org.jacoco</groupId>
@@ -217,8 +238,8 @@ SAX2 and Stax2 APIs
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
 <!--
                     <excludes>
                         <exclude>test/**</exclude>
@@ -239,7 +260,15 @@ SAX2 and Stax2 APIs
                         <include>**/*Test.java</include>
                         <include>**/Test*.java</include>
                     </includes>
+                    <argLine>-javaagent:/home/data/m2/repository/org/aspectj/aspectjweaver/1.9.7/aspectjweaver-1.9.7.jar</argLine>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjweaver</artifactId>
+                        <version>1.9.7</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>

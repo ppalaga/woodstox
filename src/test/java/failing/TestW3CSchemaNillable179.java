@@ -49,6 +49,16 @@ public class TestW3CSchemaNillable179
         testNillable("wstxtest/msv/nillableInt.xml");
     }
 
+    public void testNillableIntReader() throws Exception
+    {
+        /*
+<nl:nillableParent xmlns:nl="http://server.hw.demo/nillable">
+    <nl:nillableInt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+</nl:nillableParent>
+         */
+        testNillableReader("wstxtest/msv/nillableInt.xml");
+    }
+
     // for [woodstox-core#179]
     public void testNillableString() throws Exception
     {
@@ -121,30 +131,30 @@ public class TestW3CSchemaNillable179
 
         // javax.xml.validation
         boolean javaxXmlValidationPassed = true;
-        {
-            InputStream schemaInput = getClass().getClassLoader().getResourceAsStream(xsdResource);
-            InputStream xmlInput = getClass().getClassLoader().getResourceAsStream(xmlResource);
-            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            try {
-                Source schemaFile = new StreamSource(schemaInput);
-                Schema schema = factory.newSchema(schemaFile);
-                Validator validator = schema.newValidator();
-                try {
-                    validator.validate(new StreamSource(xmlInput));
-                } catch (SAXException e) {
-                    javaxXmlValidationPassed = false;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } finally {
-                if (xmlInput != null) {
-                    xmlInput.close();
-                }
-                if (schemaInput != null) {
-                    schemaInput.close();
-                }
-            }
-        }
+//        {
+//            InputStream schemaInput = getClass().getClassLoader().getResourceAsStream(xsdResource);
+//            InputStream xmlInput = getClass().getClassLoader().getResourceAsStream(xmlResource);
+//            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+//            try {
+//                Source schemaFile = new StreamSource(schemaInput);
+//                Schema schema = factory.newSchema(schemaFile);
+//                Validator validator = schema.newValidator();
+//                try {
+//                    validator.validate(new StreamSource(xmlInput));
+//                } catch (SAXException e) {
+//                    javaxXmlValidationPassed = false;
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            } finally {
+//                if (xmlInput != null) {
+//                    xmlInput.close();
+//                }
+//                if (schemaInput != null) {
+//                    schemaInput.close();
+//                }
+//            }
+//        }
 
         if (woodstoxPassed != javaxXmlValidationPassed) {
             if (woodstoxPassed) {
@@ -164,6 +174,108 @@ public class TestW3CSchemaNillable179
         }
     }
 
+
+
+    void testNillableReader(String xmlResource) throws Exception
+    {
+        boolean woodstoxPassed = true;
+        Exception woodstoxE = null;
+        // Woodstox
+        final String xsdResource = "wstxtest/msv/nillable.xsd";
+        {
+            XMLValidationSchemaFactory schF = XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA);
+            InputStream schemaInput = getClass().getClassLoader().getResourceAsStream(xsdResource);
+            InputStream xmlInput = getClass().getClassLoader().getResourceAsStream(xmlResource);
+            try {
+                XMLValidationSchema schema = schF.createSchema(schemaInput);
+                XMLInputFactory2 f = getInputFactory();
+                setValidating(f, false);
+
+                XMLStreamReader2 xmlReader = (XMLStreamReader2) f.createXMLStreamReader(xmlInput);
+
+                StringWriter writer = new StringWriter();
+                XMLStreamWriter2 xmlWriter = (XMLStreamWriter2) getOutputFactory().createXMLStreamWriter(writer);
+//                xmlWriter.setValidationProblemHandler(new ValidationProblemHandler() {
+//                    @Override
+//                    public void reportProblem(XMLValidationProblem problem)
+//                            throws XMLValidationException {
+//                        throw new LocalValidationError(problem);
+//                    }
+//                });
+//                xmlWriter.validateAgainst(schema);
+
+                xmlReader.setValidationProblemHandler(new ValidationProblemHandler() {
+                    @Override
+                    public void reportProblem(XMLValidationProblem problem)
+                            throws XMLValidationException {
+                        throw new LocalValidationError(problem);
+                    }
+                });
+                xmlReader.validateAgainst(schema);
+                try {
+                    xmlWriter.copyEventFromReader(xmlReader, false);
+                    while (xmlReader.hasNext()) {
+                        xmlReader.next();
+                        xmlWriter.copyEventFromReader(xmlReader, false);
+                    }
+                } catch (LocalValidationError e) {
+                    woodstoxPassed = false;
+                    woodstoxE = e;
+                }
+            } finally {
+                if (xmlInput != null) {
+                    xmlInput.close();
+                }
+                if (schemaInput != null) {
+                    schemaInput.close();
+                }
+            }
+        }
+
+        // javax.xml.validation
+        boolean javaxXmlValidationPassed = true;
+//        {
+//            InputStream schemaInput = getClass().getClassLoader().getResourceAsStream(xsdResource);
+//            InputStream xmlInput = getClass().getClassLoader().getResourceAsStream(xmlResource);
+//            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+//            try {
+//                Source schemaFile = new StreamSource(schemaInput);
+//                Schema schema = factory.newSchema(schemaFile);
+//                Validator validator = schema.newValidator();
+//                try {
+//                    validator.validate(new StreamSource(xmlInput));
+//                } catch (SAXException e) {
+//                    javaxXmlValidationPassed = false;
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            } finally {
+//                if (xmlInput != null) {
+//                    xmlInput.close();
+//                }
+//                if (schemaInput != null) {
+//                    schemaInput.close();
+//                }
+//            }
+//        }
+
+        if (woodstoxPassed != javaxXmlValidationPassed) {
+            if (woodstoxPassed) {
+                fail("Woodstox MSV validator passed"
+                        + " but javax.xml.validation validator did not pass"
+                        + " for " + xsdResource + " and "+ xmlResource);
+
+            } else {
+                StringWriter sw = new StringWriter();
+                woodstoxE.printStackTrace(new PrintWriter(sw));
+
+                fail("Woodstox MSV validator did not pass"
+                        + " but javax.xml.validation validator passed"
+                        + " for " + xsdResource + " and "+ xmlResource
+                        +".\nFailure: "+sw.toString());
+            }
+        }
+    }
     /*
     ///////////////////////////////////////////////////////////////////////
     // Helper classes
