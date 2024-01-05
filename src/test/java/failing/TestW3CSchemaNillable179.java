@@ -3,7 +3,9 @@ package failing;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
@@ -149,12 +151,15 @@ public class TestW3CSchemaNillable179
                 fail("Woodstox MSV validator passed"
                         + " but javax.xml.validation validator did not pass"
                         + " for " + xsdResource + " and "+ xmlResource);
-                
+
             } else {
+                StringWriter sw = new StringWriter();
+                woodstoxE.printStackTrace(new PrintWriter(sw));
+
                 fail("Woodstox MSV validator did not pass"
                         + " but javax.xml.validation validator passed"
                         + " for " + xsdResource + " and "+ xmlResource
-                        +".\nFailure: "+woodstoxE);
+                        +".\nFailure: "+sw.toString());
             }
         }
     }
