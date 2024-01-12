@@ -401,7 +401,7 @@ public final class SimpleOutputElement
 
         public String validateAttribute(String localName, String uri, String prefix, char[] valueChars, int valueStart,
                 int valueEnd) throws XMLStreamException {
-            final String value = new String(valueChars, valueStart, valueEnd);
+            final String value = new String(valueChars, valueStart, valueEnd - valueStart);
             mAttributes.add(uri, localName, prefix, value);
             return value;
         }

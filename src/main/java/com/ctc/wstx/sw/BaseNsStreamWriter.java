@@ -24,6 +24,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 
 import org.codehaus.stax2.ri.typed.AsciiValueEncoder;
+import org.codehaus.stax2.validation.XMLValidationException;
 import org.codehaus.stax2.validation.XMLValidationSchema;
 import org.codehaus.stax2.validation.XMLValidator;
 
@@ -32,6 +33,7 @@ import com.ctc.wstx.api.WriterConfig;
 import com.ctc.wstx.cfg.ErrorConsts;
 import com.ctc.wstx.cfg.XmlConsts;
 import com.ctc.wstx.exc.WstxIOException;
+import com.ctc.wstx.exc.WstxValidationException;
 import com.ctc.wstx.util.DefaultXmlSymbolTable;
 
 /**
@@ -695,7 +697,7 @@ public abstract class BaseNsStreamWriter
                  */
                 try {
                     mVldContent = mCurrElem.validateElementStartAndAttributes();
-                } finally {
+                } catch (XMLValidationException e) {
                     // state cleanup for the case that close() will be called afterwards
                     SimpleOutputElement thisElem = mCurrElem;
                     mCurrElem = thisElem.getParent();
@@ -709,7 +711,7 @@ public abstract class BaseNsStreamWriter
                         mState = STATE_EPILOG;
                     }
                     mStartElementOpen = false;
-
+                    throw e;
                 }
             }
         }

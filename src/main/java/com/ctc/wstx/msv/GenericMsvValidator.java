@@ -305,6 +305,7 @@ public final class GenericMsvValidator
                 uri = "";
             }
 
+            System.out.println("=== val ="+ value.length()+"=");
             if (!mCurrAcceptor.onAttribute2(uri, localName, qname, value, this, mErrorRef, typeRef)
                 || mErrorRef.str != null) {
                 reportError(mErrorRef, ATTRIBUTE, _qname(uri, localName, prefix));
@@ -330,7 +331,7 @@ public final class GenericMsvValidator
         return validateAttribute(localName, uri, prefix,
                                  new String(valueChars, valueStart, len));
     }
-    
+
     @Override
     public int validateElementAndAttributes()
         throws XMLStreamException
@@ -479,7 +480,7 @@ public final class GenericMsvValidator
     {
         // !!! TBI
         return null;
-    }    
+    }
 
     @Override
     public int getIdAttrIndex()
@@ -505,7 +506,7 @@ public final class GenericMsvValidator
     {
         return PrefixedName.valueOf(mContext.getCurrentElementName());
     }
-    
+
     PrefixedName getAttrPName()
     {
         return new PrefixedName(mCurrAttrPrefix, mCurrAttrLocalName);
@@ -577,7 +578,7 @@ public final class GenericMsvValidator
     private QName _startTagAsQName() {
         return _qname(mStartTag.namespaceURI, mStartTag.localName, mStartTagPrefix);
     }
-    
+
     private QName _qname(String ns, String local, String prefix) {
         if (prefix == null) {
             prefix = "";
