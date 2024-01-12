@@ -182,7 +182,7 @@ public final class RepairingNsStreamWriter
             doWriteNamespace(prefix, nsURI);
         }
     }
-    
+
     /*
     ///////////////////////////////////////////////////////////
     // Package methods:
@@ -277,17 +277,17 @@ public final class RepairingNsStreamWriter
         } else {
             mCurrElem = mCurrElem.createChild(prefix, localName, nsURI);
         }
-        
+
         if (prefix != null) { // prefix ok, easy, no need to overwrite
-            if (mValidator != null) {
-                mValidator.validateElementStart(localName, nsURI, prefix);
-            }
+//            if (mValidator != null) {
+//                mValidator.validateElementStart(localName, nsURI, prefix);
+//            }
             doWriteStartTag(prefix, localName);
         } else { // no prefix, more work
             prefix = generateElemPrefix(null, nsURI, mCurrElem);
-            if (mValidator != null) {
-                mValidator.validateElementStart(localName, nsURI, prefix);
-            }
+//            if (mValidator != null) {
+//                mValidator.validateElementStart(localName, nsURI, prefix);
+//            }
             mCurrElem.setPrefix(prefix);
             doWriteStartTag(prefix, localName);
             if (prefix == null || prefix.length() == 0) { // def NS
@@ -309,9 +309,9 @@ public final class RepairingNsStreamWriter
         // In repairing mode, better ensure validity:
         String actPrefix = validateElemPrefix(suggPrefix, nsURI, mCurrElem);
         if (actPrefix != null) { // fine, an existing binding we can use:
-            if (mValidator != null) {
-                mValidator.validateElementStart(localName, nsURI, actPrefix);
-            }
+//            if (mValidator != null) {
+//                mValidator.validateElementStart(localName, nsURI, actPrefix);
+//            }
             if (mOutputElemPool != null) {
                 SimpleOutputElement newCurr = mOutputElemPool;
                 mOutputElemPool = newCurr.reuseAsChild(mCurrElem, actPrefix, localName, nsURI);
@@ -330,9 +330,9 @@ public final class RepairingNsStreamWriter
                 suggPrefix = "";
             }
             actPrefix = generateElemPrefix(suggPrefix, nsURI, mCurrElem);
-            if (mValidator != null) {
-                mValidator.validateElementStart(localName, nsURI, actPrefix);
-            }
+//            if (mValidator != null) {
+//                mValidator.validateElementStart(localName, nsURI, actPrefix);
+//            }
             if (mOutputElemPool != null) {
                 SimpleOutputElement newCurr = mOutputElemPool;
                 mOutputElemPool = newCurr.reuseAsChild(mCurrElem, actPrefix, localName, nsURI);
@@ -374,7 +374,7 @@ public final class RepairingNsStreamWriter
         String prefix = elemStack.getPrefix();
         String uri = elemStack.getNsURI();
         writeStartElement(prefix, elemStack.getLocalName(), uri);
-        
+
         /* 04-Sep-2006, TSa: Although we could really just ignore all
          *   namespace declarations, some apps prefer (or even expect...)
          *   that ns bindings are preserved as much as possible. So, let's
@@ -406,7 +406,7 @@ public final class RepairingNsStreamWriter
                 // declaration!)
                 uri = ac.getURI(i);
                 prefix = ac.getPrefix(i);
-                
+
                 // With attributes, missing/empty prefix always means 'no
                 // namespace', can take a shortcut:
                 if (prefix == null || prefix.length() == 0) {
@@ -638,7 +638,7 @@ public final class RepairingNsStreamWriter
             // Nope, needs to be re-bound:
             return null;
         }
-        
+
         int status = elem.isPrefixValid(prefix, nsURI, true);
         if (status == SimpleOutputElement.PREFIX_OK) {
             return prefix;

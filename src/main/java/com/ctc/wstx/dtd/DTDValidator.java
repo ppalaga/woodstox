@@ -274,7 +274,7 @@ public class DTDValidator
                 match = exp.equals(result);
             }
             if (!match) {
-                String act = (result == null) ? 
+                String act = (result == null) ?
                     new String(valueChars, valueStart, valueEnd-valueStart) : result;
                 reportValidationProblem("Value of #FIXED attribute \""+attr+"\" (element <"+mCurrElem+">) not \""+exp+"\" as expected, but \""+act+"\"");
             }
@@ -292,7 +292,7 @@ public class DTDValidator
             // need to just return, nothing to do here
             return XMLValidator.CONTENT_ALLOW_ANY_TEXT;
         }
-        
+
         // Any special attributes missing?
         if (mCurrSpecialAttrs != null) {
             BitSet specBits = mCurrSpecialAttrs;

@@ -90,7 +90,7 @@ public abstract class BaseStreamWriter
      * Actual physical writer to output serialized XML content to
      */
     protected final XmlWriter mWriter;
-    
+
     /**
      * Intermediate buffer into which characters of a String can be
      * copied, in cases where such a copy followed by array access
@@ -141,7 +141,7 @@ public abstract class BaseStreamWriter
      * one or more schemas, and/or for safe pretty-printing (indentation).
      */
     protected XMLValidator mValidator = null;
-    
+
     /**
      * Since XML 1.1 has some differences to 1.0, we need to keep a flag
      * to indicate if we were to output XML 1.1 document.
@@ -202,7 +202,7 @@ public abstract class BaseStreamWriter
      * errors that validators might have trouble dealing with).
      */
     protected String mDtdRootElem = null;
-    
+
     protected boolean mReturnNullForDefaultNamespace;
 
     /*
@@ -225,7 +225,7 @@ public abstract class BaseStreamWriter
         mCfgAutomaticEmptyElems = (flags & OutputConfigFlags.CFG_AUTOMATIC_EMPTY_ELEMENTS) != 0;
         mCfgCDataAsText = (flags & OutputConfigFlags.CFG_OUTPUT_CDATA_AS_TEXT) != 0;
         mCfgCopyDefaultAttrs = (flags & OutputConfigFlags.CFG_COPY_DEFAULT_ATTRS) != 0;
-        
+
         mReturnNullForDefaultNamespace = mConfig.returnNullForDefaultNamespace();
     }
 
@@ -252,7 +252,7 @@ public abstract class BaseStreamWriter
         throws XMLStreamException
     {
         /* Note: there have been changes to exact scope of flushing
-         * (with Woodstox versions 2.x and 3.x); but the current 
+         * (with Woodstox versions 2.x and 3.x); but the current
          * one of just flushing the underlying OutputStream or Writer
          * should be the interpretation compatible with the Stax specs.
          */
@@ -300,7 +300,7 @@ public abstract class BaseStreamWriter
     @Override
     public abstract void writeAttribute(String localName, String value)
         throws XMLStreamException;
-    
+
     @Override
     public abstract void writeAttribute(String nsURI, String localName,
                                         String value)
@@ -728,7 +728,7 @@ public abstract class BaseStreamWriter
     public abstract void writeStartElement(String prefix, String localName,
                                            String nsURI)
         throws XMLStreamException;
-    
+
     /*
     ///////////////////////////////////////////////////////////
     // XMLStreamWriter2 methods (StAX2)
@@ -772,11 +772,11 @@ public abstract class BaseStreamWriter
                     }
                 }
                 return;
-                
+
             case END_DOCUMENT:
                 writeEndDocument();
                 return;
-                
+
             // Element start/end events:
             case START_ELEMENT:
                 if (sr instanceof StreamReaderImpl) {
@@ -790,7 +790,7 @@ public abstract class BaseStreamWriter
             case END_ELEMENT:
                 writeEndElement();
                 return;
-                
+
             case SPACE:
                 {
                     mAnyOutput = true;
@@ -857,7 +857,7 @@ public abstract class BaseStreamWriter
                     sr.getText(wrapAsTextWriter(), preserveEventData);
                 }
                 return;
-                
+
             case COMMENT:
                 {
                     mAnyOutput = true;
@@ -887,7 +887,7 @@ public abstract class BaseStreamWriter
                     mWriter.writePIEnd();
                 }
                 return;
-                
+
             case DTD:
                 {
                     DTDInfo info = sr.getDTDInfo();
@@ -902,7 +902,7 @@ public abstract class BaseStreamWriter
                     writeDTD(info);
                 }
                 return;
-                
+
             case ENTITY_REFERENCE:
                 writeEntityRef(sr.getLocalName());
                 return;
@@ -1423,7 +1423,7 @@ public abstract class BaseStreamWriter
             throw new WstxIOException(ioe);
         }
     }
-    
+
     /**
      * Method called to close an open start element, when another
      * main-level element (not namespace declaration or attribute)
@@ -1551,7 +1551,7 @@ public abstract class BaseStreamWriter
              */
             if (mDtdRootElem != null && mDtdRootElem.length() > 0) {
                 String wrongElem = null;
-                
+
                 /* Ugh. It is possible that we just don't know the prefix --
                  * in repairing mode it's assigned after this check. So for
                  * now, let's only verify the local name
@@ -1561,7 +1561,7 @@ public abstract class BaseStreamWriter
                 } else {
                     int lnLen = localName.length();
                     int oldLen = mDtdRootElem.length();
-                    
+
                     if (oldLen > lnLen
                         && mDtdRootElem.endsWith(localName)
                         && mDtdRootElem.charAt(oldLen - lnLen - 1) == ':') {

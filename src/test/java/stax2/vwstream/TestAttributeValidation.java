@@ -82,6 +82,7 @@ public class TestAttributeValidation
         sw.writeStartElement("root");
         try {
             sw.writeAttribute("fixAttr", "otherValue");
+            sw.writeEndElement();
             fail(modeDesc+" Expected a validation exception when trying to add a #FIXED attribute with 'wrong' value");
         } catch (XMLValidationException vex) {
             // expected...
@@ -94,6 +95,7 @@ public class TestAttributeValidation
         sw.writeStartElement("root");
         try {
             sw.writeAttribute("fixAttr", "");
+            sw.writeEndElement();
             fail(modeDesc+" Expected a validation exception when trying to add a #FIXED attribute with an empty value");
         } catch (XMLValidationException vex) {
             // expected...
@@ -105,6 +107,7 @@ public class TestAttributeValidation
         sw.writeEmptyElement("root");
         try {
             sw.writeAttribute("fixAttr", "foobar");
+            sw.writeEndElement();
             fail(modeDesc+" Expected a validation exception when trying to add a #FIXED attribute with an empty value");
         } catch (XMLValidationException vex) {
             // expected...
@@ -227,6 +230,7 @@ public class TestAttributeValidation
         // prefix, uri, localname (for attrs!)
         try {
             sw.writeAttribute(NS_PREFIX2, NS_URI, "attr", "value");
+            sw.writeEndElement();
             fail(modeDesc+" Expected a validation exception when trying to add an attribute with wrong ns prefix");
         } catch (XMLValidationException vex) {
             // expected...

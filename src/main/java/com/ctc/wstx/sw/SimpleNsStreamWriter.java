@@ -235,9 +235,9 @@ public class SimpleNsStreamWriter
             throw new XMLStreamException("Unbound namespace URI '"+nsURI+"'");
         }
         checkStartElement(localName, prefix);
-        if (mValidator != null) {
-            mValidator.validateElementStart(localName, nsURI, prefix);
-        }
+//        if (mValidator != null) {
+//            mValidator.validateElementStart(localName, nsURI, prefix);
+//        }
 
         if (mOutputElemPool != null) {
             SimpleOutputElement newCurr = mOutputElemPool;
@@ -255,9 +255,9 @@ public class SimpleNsStreamWriter
         throws XMLStreamException
     {
         checkStartElement(localName, prefix);
-        if (mValidator != null) {
-            mValidator.validateElementStart(localName, nsURI, prefix);
-        }
+//        if (mValidator != null) {
+//            mValidator.validateElementStart(localName, nsURI, prefix);
+//        }
 
         if (mOutputElemPool != null) {
             SimpleOutputElement newCurr = mOutputElemPool;
@@ -328,7 +328,7 @@ public class SimpleNsStreamWriter
 
         if (attrCount > 0) {
             for (int i = 0; i < attrCount; ++i) {
-                attrCollector.writeAttribute(i, mWriter, mValidator);
+                attrCollector.writeAttribute(i, mWriter, mCurrElem.getAttributeCollector());
             }
         }
     }

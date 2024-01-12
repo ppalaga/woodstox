@@ -54,7 +54,7 @@ public class TestStructuralValidation
             }
 
             StringWriter strw = new StringWriter();
-            
+
             /* Ok; can test for "wrong" root element only if we explicitly
              * output DOCTYPE declaration with specific name...
              */
@@ -62,26 +62,29 @@ public class TestStructuralValidation
             sw.writeDTD("root", "http://foo", "public-id", SIMPLE_DTD);
             try {
                 sw.writeStartElement("branch");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when trying to write wrong root element");
             } catch (XMLValidationException vex) {
                 // expected...
             }
             // should not continue after exception; state may not be valid
-            
+
             // And then undeclared root:
             sw = getDTDValidatingWriter(strw, SIMPLE_DTD, nsAware, repairing);
             try {
                 sw.writeStartElement("undefined");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when trying to write an undefined root element");
             } catch (XMLValidationException vex) {
                 // expected...
             }
-            
+
             // and same for explicitly empty element; wrong root
             sw = getDTDValidatingWriter(strw, SIMPLE_DTD, nsAware, repairing);
             sw.writeDTD("root", "http://foo", "public-id", SIMPLE_DTD);
             try {
                 sw.writeEmptyElement("branch");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when trying to write wrong root element");
             } catch (XMLValidationException vex) {
                 // expected...
@@ -138,7 +141,7 @@ public class TestStructuralValidation
             }
 
             StringWriter strw = new StringWriter();
-            
+
             // Let's try omitting the end element, first...
 
             XMLStreamWriter2 sw = getDTDValidatingWriter(strw, SIMPLE_DTD, nsAware, repairing);
@@ -167,6 +170,7 @@ public class TestStructuralValidation
             sw.writeComment("comment");
             try {
                 sw.writeEmptyElement("end");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when omitting non-optional <branch> element");
             } catch (XMLValidationException vex) {
                 // expected...
@@ -225,13 +229,14 @@ public class TestStructuralValidation
             }
 
             StringWriter strw = new StringWriter();
-            
+
             // Let's try omitting the end element, first...
 
             XMLStreamWriter2 sw = getDTDValidatingWriter(strw, SIMPLE_NS_DTD, true, repairing);
             // prefix, local name, uri (for elems)
             try {
                 sw.writeStartElement(NS_PREFIX2, "root", NS_URI);
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when passing wrong (unexpected) ns for element");
             } catch (XMLValidationException vex) {
                 // expected...
@@ -243,6 +248,7 @@ public class TestStructuralValidation
             // prefix, local name, uri (for elems)
             try {
                 sw.writeEmptyElement(NS_PREFIX2, NS_URI, "root");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when passing wrong (unexpected) ns for element");
             } catch (XMLValidationException vex) {
                 // expected...
@@ -253,6 +259,7 @@ public class TestStructuralValidation
             // prefix, local name, uri (for elems)
             try {
                 sw.writeEmptyElement(NS_PREFIX, NS_URI, "root");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when passing wrong (unexpected) ns for element");
             } catch (XMLValidationException vex) {
                 // expected...

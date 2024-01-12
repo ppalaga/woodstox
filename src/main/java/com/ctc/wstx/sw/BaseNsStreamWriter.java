@@ -24,6 +24,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 
 import org.codehaus.stax2.ri.typed.AsciiValueEncoder;
+import org.codehaus.stax2.validation.XMLValidationSchema;
+import org.codehaus.stax2.validation.XMLValidator;
 
 import com.ctc.wstx.api.EmptyElementHandler;
 import com.ctc.wstx.api.WriterConfig;
@@ -59,7 +61,7 @@ public abstract class BaseNsStreamWriter
      * (we are in repairing mode)
      */
     final protected boolean mAutomaticNS;
-    
+
     final protected EmptyElementHandler mEmptyElementHandler;
 
     /*
@@ -169,7 +171,7 @@ public abstract class BaseNsStreamWriter
         }
 
         /* 25-Sep-2004, TSa: Let's check that "xml" and "xmlns" are not
-         *     (re-)defined to any other value, nor that value they 
+         *     (re-)defined to any other value, nor that value they
          *     are bound to are bound to other prefixes.
          */
         /* 01-Apr-2005, TSa: And let's not leave it optional: such
@@ -193,7 +195,7 @@ public abstract class BaseNsStreamWriter
                     throwOutputError(ErrorConsts.ERR_NS_REDECL_XMLNS_URI, prefix);
                 }
             }
-            
+
             /* 05-Feb-2005, TSa: Also, as per namespace specs; the 'empty'
              *   namespace URI can not be bound as a non-default namespace
              *   (ie. for any actual prefix)
@@ -246,9 +248,9 @@ public abstract class BaseNsStreamWriter
         throws XMLStreamException
     {
         checkStartElement(localName, null);
-        if (mValidator != null) {
-            mValidator.validateElementStart(localName, XmlConsts.ELEM_NO_NS_URI, XmlConsts.ELEM_NO_PREFIX);
-        }
+//        if (mValidator != null) {
+//            mValidator.validateElementStart(localName, XmlConsts.ELEM_NO_NS_URI, XmlConsts.ELEM_NO_PREFIX);
+//        }
         mEmptyElement = true;
         if (mOutputElemPool != null) {
             SimpleOutputElement newCurr = mOutputElemPool;
@@ -294,9 +296,9 @@ public abstract class BaseNsStreamWriter
         throws XMLStreamException
     {
         checkStartElement(localName, null);
-        if (mValidator != null) {
-            mValidator.validateElementStart(localName, XmlConsts.ELEM_NO_NS_URI, XmlConsts.ELEM_NO_PREFIX);
-        }
+//        if (mValidator != null) {
+//            mValidator.validateElementStart(localName, XmlConsts.ELEM_NO_NS_URI, XmlConsts.ELEM_NO_PREFIX);
+//        }
         mEmptyElement = false;
         if (mOutputElemPool != null) {
             SimpleOutputElement newCurr = mOutputElemPool;
@@ -334,11 +336,12 @@ public abstract class BaseNsStreamWriter
         if (!mStartElementOpen) {
             throwOutputError(ErrorConsts.WERR_ATTR_NO_ELEM);
         }
-        if (mCheckAttrs) { // still need to ensure no duplicate attrs?
-            mCurrElem.checkAttrWrite(nsURI, localName);
-        }
         try {
             if (mValidator == null) {
+                 if (mCheckAttrs) { // still need to ensure no duplicate attrs?
+                     mCurrElem.mAttributes.add(nsURI, localName, null, null);
+                 }
+
                  if (prefix == null || prefix.length() == 0) {
                      mWriter.writeTypedAttribute(localName, enc);
                  } else {
@@ -346,7 +349,7 @@ public abstract class BaseNsStreamWriter
                  }
             } else {
                 mWriter.writeTypedAttribute
-                    (prefix, localName, nsURI, enc, mValidator, getCopyBuffer());
+                    (prefix, localName, nsURI, enc, mCurrElem.getAttributeCollector(), getCopyBuffer());
             }
         } catch (IOException ioe) {
             throw new WstxIOException(ioe);
@@ -430,7 +433,7 @@ public abstract class BaseNsStreamWriter
         }
 
         if (mValidator != null) {
-            mVldContent = mValidator.validateElementAndAttributes();
+            mVldContent = mCurrElem.validateElementStartAndAttributes();
         }
 
         // Need bit more special handling for empty elements...
@@ -493,13 +496,14 @@ public abstract class BaseNsStreamWriter
             String value)
         throws XMLStreamException
     {
-        if (mCheckAttrs) { // still need to ensure no duplicate attrs?
-            mCurrElem.checkAttrWrite(nsURI, localName);
-        }
         if (mValidator != null) {
             // No need to get it normalized... even if validator does normalize
             // it, we don't use that for anything
-            mValidator.validateAttribute(localName, nsURI, prefix, value);
+            mCurrElem.getAttributeCollector().validateAttribute(localName, nsURI, prefix, value);
+        } else if (mCheckAttrs) {
+            // this is else if because mValidator != null implies mCheckAttrs == true
+            // still need to ensure no duplicate attrs
+            mCurrElem.addAttribute(nsURI, localName, prefix, value);
         }
         try {
             int vlen = value.length();
@@ -537,7 +541,7 @@ public abstract class BaseNsStreamWriter
         throws XMLStreamException
     {
         if (mCheckAttrs) { // still need to ensure no duplicate attrs?
-            mCurrElem.checkAttrWrite(nsURI, localName);
+            mCurrElem.addAttribute(nsURI, localName, prefix, new String(buf, start, len));
         }
         if (mValidator != null) {
             // No need to get it normalized... even if validator does normalize
@@ -658,11 +662,22 @@ public abstract class BaseNsStreamWriter
             reportNwfStructure("No open start element, when trying to write end element");
         }
 
+        if (mStartElementOpen) {
+            /* Can't/shouldn't call closeStartElement, but need to do same
+             * processing. Thus, this is almost identical to closeStartElement:
+             */
+            if (mValidator != null) {
+                /* Note: return value is not of much use, since the
+                 * element will be closed right away...
+                 */
+                mVldContent = mCurrElem.validateElementStartAndAttributes();
+            }
+        }
+
         SimpleOutputElement thisElem = mCurrElem;
         String prefix = thisElem.getPrefix();
         String localName = thisElem.getLocalName();
         String nsURI = thisElem.getNamespaceURI();
-
         // Ok, and then let's pop that element from the stack
         mCurrElem = thisElem.getParent();
         // Need to return the instance to pool?
@@ -691,12 +706,6 @@ public abstract class BaseNsStreamWriter
             /* Can't/shouldn't call closeStartElement, but need to do same
              * processing. Thus, this is almost identical to closeStartElement:
              */
-            if (mValidator != null) {
-                /* Note: return value is not of much use, since the
-                 * element will be closed right away...
-                 */
-                mVldContent = mValidator.validateElementAndAttributes();
-            }
             mStartElementOpen = false;
             try {
                 //If an EmptyElementHandler is provided use it to determine if allowEmpty is set
@@ -763,4 +772,74 @@ public abstract class BaseNsStreamWriter
 
     protected abstract void writeStartOrEmpty(String prefix, String localName, String nsURI)
         throws XMLStreamException;
+
+    @Override
+    public int getAttributeCount()
+    {
+        return mCurrElem.getAttributeCount();
+    }
+
+    @Override
+    public String getAttributeLocalName(int index)
+    {
+        return mCurrElem.getAttributeLocalName(index);
+    }
+
+    @Override
+    public String getAttributeNamespace(int index)
+    {
+        return mCurrElem.getAttributeNamespace(index);
+    }
+
+    @Override
+    public String getAttributePrefix(int index)
+    {
+        return mCurrElem.getAttributePrefix(index);
+    }
+
+    @Override
+    public String getAttributeValue(int index)
+    {
+        return mCurrElem.getAttributeValue(index);
+    }
+
+    @Override
+    public String getAttributeValue(String nsURI, String localName)
+    {
+        return mCurrElem.getAttributeValue(nsURI, localName);
+    }
+
+    @Override
+    public String getAttributeType(int index) {
+        return mCurrElem.getAttributeType(index);
+    }
+
+    @Override
+    public int findAttributeIndex(String nsURI, String localName)
+    {
+        return mCurrElem.findAttributeIndex(nsURI, localName);
+    }
+
+    @Override
+    public XMLValidator validateAgainst(XMLValidationSchema schema) throws XMLStreamException {
+        final XMLValidator validateAgainst = super.validateAgainst(schema);
+        mCurrElem.setValidator(mValidator);
+        return validateAgainst;
+    }
+
+    @Override
+    public XMLValidator stopValidatingAgainst(XMLValidationSchema schema) throws XMLStreamException {
+        final XMLValidator result = super.stopValidatingAgainst(schema);
+        mCurrElem.setValidator(mValidator);
+        return result;
+    }
+
+    @Override
+    public XMLValidator stopValidatingAgainst(XMLValidator validator) throws XMLStreamException {
+        final XMLValidator result = super.stopValidatingAgainst(validator);
+        mCurrElem.setValidator(mValidator);
+        return result;
+    }
+
+
 }

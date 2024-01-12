@@ -86,7 +86,7 @@ public class TestW3CSchemaNillable179
                 xmlReader.validateAgainst(schema);
                 */
 
-                StringWriter writer = new StringWriter();
+                final StringWriter writer = new StringWriter();
                 XMLStreamWriter2 xmlWriter = (XMLStreamWriter2) getOutputFactory().createXMLStreamWriter(writer);
                 xmlWriter.setValidationProblemHandler(new ValidationProblemHandler() {
                     @Override
@@ -106,6 +106,7 @@ public class TestW3CSchemaNillable179
                 } catch (LocalValidationError e) {
                     woodstoxPassed = false;
                     woodstoxE = e;
+                    System.out.println("=== writer ="+ writer +"=");
                 }
             } finally {
                 if (xmlInput != null) {

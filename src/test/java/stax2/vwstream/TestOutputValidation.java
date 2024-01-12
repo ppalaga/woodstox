@@ -10,7 +10,7 @@ import org.codehaus.stax2.validation.*;
 /**
  * Unit test suite that test basic aspects of (DTD validation,
  * mostly regarding specialized content types (EMPTY, ANY, #PCDATA)
- * 
+ *
  */
 public class TestOutputValidation
     extends BaseOutputTest
@@ -147,6 +147,7 @@ public class TestOutputValidation
             sw.writeStartElement("root");
             try {
                 sw.writeStartElement("leaf");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when trying to add an element into EMPTY content model");
             } catch (XMLValidationException vex) {
                 // expected...
@@ -158,6 +159,7 @@ public class TestOutputValidation
             sw.writeStartElement("root");
             try {
                 sw.writeEmptyElement("leaf");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when trying to add an element into EMPTY content model");
             } catch (XMLValidationException vex) {
                 // expected...
@@ -169,6 +171,7 @@ public class TestOutputValidation
             sw.writeStartElement("root");
             try {
                 sw.writeCharacters(" ");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when trying to any text into EMPTY content model");
             } catch (XMLValidationException vex) { }
             sw.close();
@@ -178,6 +181,7 @@ public class TestOutputValidation
             sw.writeStartElement("root");
             try {
                 sw.writeCData("foo");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when trying to add CDATA into EMPTY content model");
             } catch (XMLValidationException vex) { }
             sw.close();
@@ -299,6 +303,7 @@ public class TestOutputValidation
             sw.writeStartElement("root");
             try {
                 sw.writeStartElement("unknown");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when trying to add an undeclared element");
             } catch (XMLValidationException vex) {
                 // expected...
@@ -310,6 +315,7 @@ public class TestOutputValidation
             sw.writeStartElement("root");
             try {
                 sw.writeAttribute("unknown", "value");
+                sw.writeEndElement();
                 fail(modeDesc+" Expected a validation exception when trying to add an undeclared attribute");
             } catch (XMLValidationException vex) {
                 // expected...
