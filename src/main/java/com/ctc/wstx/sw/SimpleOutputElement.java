@@ -208,7 +208,7 @@ public final class SimpleOutputElement
     protected void addToPool(SimpleOutputElement poolHead)
     {
         mParent = poolHead;
-        mAttributes.mValidator = null;
+        mAttributes.reset();
     }
 
     /*

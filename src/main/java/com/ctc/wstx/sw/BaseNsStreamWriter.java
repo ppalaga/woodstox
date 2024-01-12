@@ -433,19 +433,42 @@ public abstract class BaseNsStreamWriter
         }
 
         if (mValidator != null) {
-            mVldContent = mCurrElem.validateElementStartAndAttributes();
+            try {
+                mVldContent = mCurrElem.validateElementStartAndAttributes();
+                if (emptyElem) {
+                    mVldContent = mValidator.validateElementEnd
+                            (mCurrElem.getLocalName(), mCurrElem.getNamespaceURI(), mCurrElem.getPrefix());
+                }
+            } finally {
+                // We prefer not to enter the exception handler in the non-validating case
+                // but at the same time we need to prepare the proper state for a possible subsequent close() call.
+                // Hence the code here should be kept in sync with the if (emptyElem) block right
+                // after the current finally block
+
+                // Need bit more special handling for empty elements...
+                if (emptyElem) {
+                    SimpleOutputElement curr = mCurrElem;
+                    mCurrElem = curr.getParent();
+                    if (mCurrElem.isRoot()) { // Did we close the root? (isRoot() returns true for the virtual "document node")
+                        mState = STATE_EPILOG;
+                    }
+                    if (mPoolSize < MAX_POOL_SIZE) {
+                        curr.addToPool(mOutputElemPool);
+                        mOutputElemPool = curr;
+                        ++mPoolSize;
+                    }
+                }
+            }
+            return;
         }
 
+        // Keep the following if block in sync with the finally block above
         // Need bit more special handling for empty elements...
         if (emptyElem) {
             SimpleOutputElement curr = mCurrElem;
             mCurrElem = curr.getParent();
             if (mCurrElem.isRoot()) { // Did we close the root? (isRoot() returns true for the virtual "document node")
                 mState = STATE_EPILOG;
-            }
-            if (mValidator != null) {
-                mVldContent = mValidator.validateElementEnd
-                    (curr.getLocalName(), curr.getNamespaceURI(), curr.getPrefix());
             }
             if (mPoolSize < MAX_POOL_SIZE) {
                 curr.addToPool(mOutputElemPool);
@@ -670,7 +693,24 @@ public abstract class BaseNsStreamWriter
                 /* Note: return value is not of much use, since the
                  * element will be closed right away...
                  */
-                mVldContent = mCurrElem.validateElementStartAndAttributes();
+                try {
+                    mVldContent = mCurrElem.validateElementStartAndAttributes();
+                } finally {
+                    // state cleanup for the case that close() will be called afterwards
+                    SimpleOutputElement thisElem = mCurrElem;
+                    mCurrElem = thisElem.getParent();
+                    // Need to return the instance to pool?
+                    if (mPoolSize < MAX_POOL_SIZE) {
+                        thisElem.addToPool(mOutputElemPool);
+                        mOutputElemPool = thisElem;
+                        ++mPoolSize;
+                    }
+                    if (mCurrElem.isRoot()) {
+                        mState = STATE_EPILOG;
+                    }
+                    mStartElementOpen = false;
+
+                }
             }
         }
 
@@ -699,6 +739,10 @@ public abstract class BaseNsStreamWriter
             }
         }
 
+        if (mCurrElem.isRoot()) {
+            mState = STATE_EPILOG;
+        }
+
         /* Now, do we have an unfinished start element (created via
          * writeStartElement() earlier)?
          */
@@ -715,9 +759,6 @@ public abstract class BaseNsStreamWriter
                 // We could write an empty element, implicitly?
                 if (allowEmpty) {
                     mWriter.writeStartTagEmptyEnd();
-                    if (mCurrElem.isRoot()) {
-                        mState = STATE_EPILOG;
-                    }
                     if (mValidator != null) {
                         mVldContent = mValidator.validateElementEnd(localName, nsURI, prefix);
                     }
@@ -734,10 +775,6 @@ public abstract class BaseNsStreamWriter
             mWriter.writeEndTag(prefix, localName);
         } catch (IOException ioe) {
             throw new WstxIOException(ioe);
-        }
-
-        if (mCurrElem.isRoot()) {
-            mState = STATE_EPILOG;
         }
 
         // Ok, time to validate...
@@ -824,6 +861,9 @@ public abstract class BaseNsStreamWriter
     public XMLValidator validateAgainst(XMLValidationSchema schema) throws XMLStreamException {
         final XMLValidator validateAgainst = super.validateAgainst(schema);
         mCurrElem.setValidator(mValidator);
+        if (mOutputElemPool != null) {
+            mOutputElemPool.setValidator(mValidator);
+        }
         return validateAgainst;
     }
 
@@ -831,6 +871,9 @@ public abstract class BaseNsStreamWriter
     public XMLValidator stopValidatingAgainst(XMLValidationSchema schema) throws XMLStreamException {
         final XMLValidator result = super.stopValidatingAgainst(schema);
         mCurrElem.setValidator(mValidator);
+        if (mOutputElemPool != null) {
+            mOutputElemPool.setValidator(mValidator);
+        }
         return result;
     }
 
@@ -838,6 +881,9 @@ public abstract class BaseNsStreamWriter
     public XMLValidator stopValidatingAgainst(XMLValidator validator) throws XMLStreamException {
         final XMLValidator result = super.stopValidatingAgainst(validator);
         mCurrElem.setValidator(mValidator);
+        if (mOutputElemPool != null) {
+            mOutputElemPool.setValidator(mValidator);
+        }
         return result;
     }
 

@@ -321,14 +321,14 @@ public class NonNsStreamWriter
         if (mValidator != null) {
             String localName = mElements.getLastString();
             try {
-                validateElementStartAndAttributes(localName);
+                mVldContent = validateElementStartAndAttributes(localName);
                 if (emptyElem) {
                     mVldContent = mValidator.validateElementEnd(localName, XmlConsts.ELEM_NO_NS_URI, XmlConsts.ELEM_NO_PREFIX);
                 }
             } finally {
                 // We prefer not to enter the exception handler in the non-validating case
                 // but at the same time we need to prepare the proper state for a possible subsequent close() call.
-                // Hence the code here should be kept in sync with the if (emptyElem) bloc right
+                // Hence the code here should be kept in sync with the if (emptyElem) block right
                 // after the current finally block
 
                 // Need bit more special handling for empty elements...
@@ -342,7 +342,7 @@ public class NonNsStreamWriter
             return;
         }
 
-        // Keep the following block in sync with the finally block above
+        // Keep the following if block in sync with the finally block above
         // Need bit more special handling for empty elements...
         if (emptyElem) {
             mElements.removeLast();
@@ -505,6 +505,9 @@ public class NonNsStreamWriter
                 reportNwfStructure("Mismatching close element name, '"+localName+"'; expected '"+expName+"'.");
             }
         }
+        if (mElements.isEmpty()) {
+            mState = STATE_EPILOG;
+        }
 
         /* Can't yet validate, since we have two paths; one for empty
          * elements, another for non-empty...
@@ -516,23 +519,24 @@ public class NonNsStreamWriter
              * processing. Thus, this is almost identical to closeStartElement:
              */
             mStartElementOpen = false;
-            if (mValidator != null) {
-                /* Note: return value is not of much use, since the
-                 * element will be closed right away...
-                 */
-                mVldContent = validateElementStartAndAttributes(localName);
-            }
             try {
                 // We could write an empty element, implicitly?
                 if (allowEmpty) {
                     mWriter.writeStartTagEmptyEnd();
-                    if (mElements.isEmpty()) {
-                        mState = STATE_EPILOG;
-                    }
                     if (mValidator != null) {
+                        /* Note: return value is not of much use, since the
+                         * element will be closed right away...
+                         */
+                        mVldContent = validateElementStartAndAttributes(localName);
                         mVldContent = mValidator.validateElementEnd(localName, XmlConsts.ELEM_NO_NS_URI, XmlConsts.ELEM_NO_PREFIX);
                     }
                     return;
+                }
+                if (mValidator != null) {
+                    /* Note: return value is not of much use, since the
+                     * element will be closed right away...
+                     */
+                    mVldContent = validateElementStartAndAttributes(localName);
                 }
                 // Nah, need to close open elem, and then output close elem
                 mWriter.writeStartTagEnd();
@@ -545,10 +549,6 @@ public class NonNsStreamWriter
             mWriter.writeEndTag(localName);
         } catch (IOException ioe) {
             throwFromIOE(ioe);
-        }
-
-        if (mElements.isEmpty()) {
-            mState = STATE_EPILOG;
         }
 
         // Ok, time to validate...
@@ -582,10 +582,13 @@ public class NonNsStreamWriter
 
         void validate(XMLValidator validator) throws XMLStreamException {
             if (mAttrMap != null && !mAttrMap.isEmpty())  {
-                for (Entry<String, String> attr : mAttrMap.entrySet()) {
-                    validator.validateAttribute(attr.getKey(), XmlConsts.ATTR_NO_NS_URI, XmlConsts.ATTR_NO_PREFIX, attr.getValue());
+                try {
+                    for (Entry<String, String> attr : mAttrMap.entrySet()) {
+                        validator.validateAttribute(attr.getKey(), XmlConsts.ATTR_NO_NS_URI, XmlConsts.ATTR_NO_PREFIX, attr.getValue());
+                    }
+                } finally {
+                    mAttrMap = null;
                 }
-                mAttrMap = null;
             }
         }
 
